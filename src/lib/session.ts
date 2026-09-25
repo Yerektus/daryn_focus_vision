@@ -45,31 +45,26 @@ function b64urlToBytes(value: string) {
   return bytes;
 }
 
-export function cookieOptions() {
+export function cookieOptions(maxAge = SESSION_MAX_AGE) {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: SESSION_MAX_AGE,
+    maxAge,
   };
 }
 
-export async function signSession(userId: string) {
+async function signBody(body: string) {
   const key = await hmacKey();
   if (!key) return null;
-  const payload: Payload = {
-    sub: userId,
-    exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE,
-  };
-  const body = bytesToB64url(new TextEncoder().encode(JSON.stringify(payload)));
   const sig = new Uint8Array(
     await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body)),
   );
   return `${body}.${bytesToB64url(sig)}`;
 }
 
-export async function verifySessionToken(token: string) {
+async function verifyBody(token: string) {
   const dot = token.indexOf(".");
   if (dot <= 0) return null;
   const body = token.slice(0, dot);
@@ -85,12 +80,38 @@ export async function verifySessionToken(token: string) {
       b64urlToBytes(sig),
       new TextEncoder().encode(body),
     );
-    if (!ok) return null;
-    const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(body))) as Payload;
-    if (typeof payload.sub !== "string" || typeof payload.exp !== "number") return null;
-    if (payload.exp < Date.now() / 1000) return null;
-    return { sub: payload.sub };
+    return ok ? body : null;
   } catch {
     return null;
   }
+}
+
+export async function signJson(value: unknown) {
+  const body = bytesToB64url(new TextEncoder().encode(JSON.stringify(value)));
+  return signBody(body);
+}
+
+export async function verifyJson(token: string) {
+  const body = await verifyBody(token);
+  if (!body) return null;
+  try {
+    return JSON.parse(new TextDecoder().decode(b64urlToBytes(body))) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+export async function signSession(userId: string) {
+  const payload: Payload = {
+    sub: userId,
+    exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE,
+  };
+  return signJson(payload);
+}
+
+export async function verifySessionToken(token: string) {
+  const payload = (await verifyJson(token)) as Payload | null;
+  if (!payload || typeof payload.sub !== "string" || typeof payload.exp !== "number") return null;
+  if (payload.exp < Date.now() / 1000) return null;
+  return { sub: payload.sub };
 }

@@ -63,8 +63,13 @@ export async function register(_prev: AuthState, formData: FormData): Promise<Au
     return { error: "Пароль: от 8 до 128 символов" };
   }
 
-  const created = await createUser({ name, email, password });
-  if ("error" in created) return { error: created.error ?? "Не удалось создать аккаунт" };
+  let created: Awaited<ReturnType<typeof createUser>>;
+  try {
+    created = await createUser({ name, email, password });
+  } catch {
+    return { error: "Не удалось создать аккаунт. Попробуйте ещё раз." };
+  }
+  if ("error" in created) return { error: created.error };
   if (!(await startSession(created.user.id))) {
     return { error: "Сервер не настроен: задайте AUTH_SECRET" };
   }

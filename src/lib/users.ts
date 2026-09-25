@@ -1,12 +1,15 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { cookies } from "next/headers";
 import { promisify } from "node:util";
+import { cookieOptions, signJson, verifyJson } from "@/lib/session";
 
 const scrypt = promisify(scryptCb);
 const KEYLEN = 64;
-const FILE = path.join(process.cwd(), "data", "users.json");
 const DUMMY_SALT = Buffer.from("dfv-auth-timing", "utf8");
+
+/** На Vercel файловая система только для чтения, поэтому список аккаунтов живёт в cookie. */
+export const ACCOUNTS_COOKIE = "dfv_accounts";
+const ACCOUNTS_MAX_AGE = 60 * 60 * 24 * 400;
 
 export type UserRecord = {
   id: string;
@@ -15,17 +18,6 @@ export type UserRecord = {
   passwordHash: string;
   createdAt: number;
 };
-
-let queue: Promise<unknown> = Promise.resolve();
-
-function locked<T>(fn: () => Promise<T>) {
-  const run = queue.then(fn, fn);
-  queue = run.then(
-    () => undefined,
-    () => undefined,
-  );
-  return run;
-}
 
 function isUser(value: unknown): value is UserRecord {
   if (!value || typeof value !== "object") return false;
@@ -40,22 +32,18 @@ function isUser(value: unknown): value is UserRecord {
 }
 
 async function readUsers() {
-  try {
-    const raw = await readFile(FILE, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isUser);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw error;
-  }
+  const token = (await cookies()).get(ACCOUNTS_COOKIE)?.value;
+  if (!token) return [];
+  const parsed = await verifyJson(token);
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(isUser);
 }
 
 async function writeUsers(users: UserRecord[]) {
-  await mkdir(path.dirname(FILE), { recursive: true });
-  const tmp = `${FILE}.${process.pid}.tmp`;
-  await writeFile(tmp, JSON.stringify(users, null, 2), "utf8");
-  await rename(tmp, FILE);
+  const token = await signJson(users);
+  if (!token) return false;
+  (await cookies()).set(ACCOUNTS_COOKIE, token, cookieOptions(ACCOUNTS_MAX_AGE));
+  return true;
 }
 
 export async function hashPassword(password: string) {
@@ -76,7 +64,11 @@ export async function verifyPassword(password: string, stored: string) {
     return false;
   }
   const expected = Buffer.from(hash, "base64url");
-  const derived = (await scrypt(password, Buffer.from(salt, "base64url"), expected.length)) as Buffer;
+  const derived = (await scrypt(
+    password,
+    Buffer.from(salt, "base64url"),
+    expected.length,
+  )) as Buffer;
   if (derived.length !== expected.length) return false;
   return timingSafeEqual(derived, expected);
 }
@@ -96,20 +88,19 @@ export async function createUser(input: {
   email: string;
   password: string;
 }): Promise<{ user: UserRecord } | { error: string }> {
-  return locked(async () => {
-    const users = await readUsers();
-    if (users.some((user) => user.email === input.email)) {
-      return { error: "Такая почта уже зарегистрирована" as const };
-    }
-    const user: UserRecord = {
-      id: crypto.randomUUID(),
-      name: input.name,
-      email: input.email,
-      passwordHash: await hashPassword(input.password),
-      createdAt: Date.now(),
-    };
-    users.push(user);
-    await writeUsers(users);
-    return { user };
-  });
+  const users = await readUsers();
+  if (users.some((user) => user.email === input.email)) {
+    return { error: "Такая почта уже зарегистрирована" };
+  }
+  const user: UserRecord = {
+    id: crypto.randomUUID(),
+    name: input.name,
+    email: input.email,
+    passwordHash: await hashPassword(input.password),
+    createdAt: Date.now(),
+  };
+  users.push(user);
+  const saved = await writeUsers(users);
+  if (!saved) return { error: "Сервер не настроен: задайте AUTH_SECRET" };
+  return { user };
 }
