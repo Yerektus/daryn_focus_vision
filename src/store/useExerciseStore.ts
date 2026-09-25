@@ -69,6 +69,7 @@ export const useExerciseStore = create<ExerciseState>()(
     }),
     {
       name: "dfv-exercises",
+      skipHydration: true,
       version: 2,
       // фильтры не сохраняем, они относятся только к текущему сеансу
       partialize: (s) => ({ done: s.done, results: s.results }),
@@ -90,3 +91,33 @@ export const useExerciseStore = create<ExerciseState>()(
     },
   ),
 );
+
+/** Подключает localStorage конкретного аккаунта. Старый общий ключ переносится один раз. */
+export async function bindExerciseStore(userId: string) {
+  const name = `dfv-exercises-${userId}`;
+  if (
+    useExerciseStore.persist.getOptions().name === name &&
+    useExerciseStore.persist.hasHydrated()
+  ) {
+    return;
+  }
+
+  if (typeof window !== "undefined") {
+    const legacyKey = "dfv-exercises";
+    const legacy = localStorage.getItem(legacyKey);
+    const hasScoped = Object.keys(localStorage).some((key) => key.startsWith("dfv-exercises-"));
+    if (legacy && !hasScoped) localStorage.setItem(name, legacy);
+  }
+
+  useExerciseStore.persist.setOptions({ name });
+  if (typeof window !== "undefined" && !localStorage.getItem(name)) {
+    useExerciseStore.setState({
+      category: "Все",
+      level: "Все",
+      query: "",
+      done: {},
+      results: {},
+    });
+  }
+  await useExerciseStore.persist.rehydrate();
+}
