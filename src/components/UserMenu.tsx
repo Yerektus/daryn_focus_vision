@@ -1,15 +1,22 @@
 import { logout } from "@/app/auth-actions";
+import ProfileLink from "./ProfileLink";
 
-export default function UserMenu({ name, email }: { name: string; email: string }) {
+export default function UserMenu({
+  name,
+  stacked = false,
+}: {
+  name: string;
+  stacked?: boolean;
+}) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="max-w-[9rem] truncate text-sm font-extrabold text-ink sm:max-w-[14rem]" title={email}>
-        {name}
-      </span>
+    <div className={stacked ? "flex flex-col gap-2" : "flex items-center gap-2"}>
+      <ProfileLink name={name} stacked={stacked} />
       <form action={logout}>
         <button
           type="submit"
-          className="pill-kid px-4 py-2.5 text-sm font-extrabold"
+          className={`pill-kid font-extrabold ${
+            stacked ? "w-full px-5 py-3 text-left text-base" : "px-4 py-2.5 text-sm"
+          }`}
         >
           Выйти
         </button>

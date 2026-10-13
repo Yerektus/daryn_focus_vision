@@ -41,6 +41,9 @@ type ExerciseState = {
   done: DoneMap;
   /** Последний разбор по каждому упражнению */
   results: Record<string, SessionResult>;
+  /** Профиль ребёнка: имя и выбранный образ Барсика (id из data/profile) */
+  childName: string;
+  avatar: string;
 
   setCategory: (category: Filter<Category>) => void;
   setLevel: (level: Filter<Level>) => void;
@@ -50,21 +53,30 @@ type ExerciseState = {
   /** Отметка ставится автоматически после прохождения упражнения на камере */
   markDone: (id: string) => void;
   saveResult: (result: SessionResult) => void;
+  setChildName: (childName: string) => void;
+  setAvatar: (avatar: string) => void;
   resetFilters: () => void;
   resetProgress: () => void;
 };
 
+/** Состояние нового аккаунта: всё, что принадлежит пользователю, плюс фильтры */
+const ACCOUNT_DEFAULTS = {
+  category: "Все",
+  level: "Все",
+  query: "",
+  fitOnly: false,
+  gmfcs: null,
+  gmfcsSource: null,
+  done: {},
+  results: {},
+  childName: "",
+  avatar: "wave",
+} satisfies Partial<ExerciseState>;
+
 export const useExerciseStore = create<ExerciseState>()(
   persist(
     (set) => ({
-      category: "Все",
-      level: "Все",
-      query: "",
-      fitOnly: false,
-      gmfcs: null,
-      gmfcsSource: null,
-      done: {},
-      results: {},
+      ...ACCOUNT_DEFAULTS,
 
       setCategory: (category) => set({ category }),
       setLevel: (level) => set({ level }),
@@ -78,6 +90,8 @@ export const useExerciseStore = create<ExerciseState>()(
         set((s) => ({
           results: { ...s.results, [result.exerciseId]: result },
         })),
+      setChildName: (childName) => set({ childName }),
+      setAvatar: (avatar) => set({ avatar }),
       resetFilters: () =>
         set({ category: "Все", level: "Все", query: "", fitOnly: false }),
       resetProgress: () => set({ done: {}, results: {} }),
@@ -86,12 +100,23 @@ export const useExerciseStore = create<ExerciseState>()(
       name: "dfv-exercises",
       skipHydration: true,
       version: 2,
+      // Данные прошлого аккаунта не должны достаться новому, а у старых
+      // сохранений части полей нет. Сбрасываем здесь, а не через setState
+      // перед rehydrate: setState сразу пишет в localStorage и затёр бы
+      // сохранённый прогресс пустым.
+      merge: (persisted, current) => ({
+        ...current,
+        ...ACCOUNT_DEFAULTS,
+        ...(persisted as Partial<ExerciseState> | undefined),
+      }),
       // фильтры не сохраняем, они относятся только к текущему сеансу
       partialize: (s) => ({
         done: s.done,
         results: s.results,
         gmfcs: s.gmfcs,
         gmfcsSource: s.gmfcsSource,
+        childName: s.childName,
+        avatar: s.avatar,
       }),
       migrate: (persisted, version) => {
         const state = persisted as { done?: unknown };
@@ -130,20 +155,5 @@ export async function bindExerciseStore(userId: string) {
   }
 
   useExerciseStore.persist.setOptions({ name });
-  // уровень GMFCS прошлого аккаунта не должен достаться новому: у старых
-  // сохранений этого поля нет, и rehydrate оставил бы текущее значение
-  useExerciseStore.setState({ gmfcs: null, gmfcsSource: null, fitOnly: false });
-  if (typeof window !== "undefined" && !localStorage.getItem(name)) {
-    useExerciseStore.setState({
-      category: "Все",
-      level: "Все",
-      query: "",
-      fitOnly: false,
-      gmfcs: null,
-      gmfcsSource: null,
-      done: {},
-      results: {},
-    });
-  }
   await useExerciseStore.persist.rehydrate();
 }

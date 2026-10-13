@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Mascot from "@/components/Mascot";
+import MobileMenu from "@/components/MobileMenu";
 import Nav from "@/components/Nav";
 import ProgressScope from "@/components/ProgressScope";
 import Tour from "@/components/Tour";
@@ -20,8 +21,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   return (
     <>
       <header className="sticky top-0 z-50 border-b-2 border-line bg-[#FFF8EC]/90 backdrop-blur">
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-2">
             <Link
               href="/"
               aria-label="На главную"
@@ -29,12 +30,22 @@ export default async function MainLayout({ children }: { children: React.ReactNo
             >
               <Mascot className="size-9" />
             </Link>
-            <div className="flex flex-wrap items-center gap-2" data-tour="nav">
+            <div className="hidden items-center gap-2 md:flex" data-tour="nav">
               <Nav />
               <TourButton />
             </div>
           </div>
-          <UserMenu name={user.name} email={user.email} />
+          <div className="hidden md:block">
+            <UserMenu name={user.name} />
+          </div>
+          <MobileMenu>
+            <div className="flex flex-col gap-2">
+              <Nav stacked />
+              <TourButton stacked />
+              <div className="my-1 border-t-2 border-dashed border-line" />
+              <UserMenu name={user.name} stacked />
+            </div>
+          </MobileMenu>
         </div>
       </header>
 

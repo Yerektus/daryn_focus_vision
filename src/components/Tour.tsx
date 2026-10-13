@@ -179,7 +179,10 @@ function ActiveTour() {
     let scrolled = false;
     let lastKey = "";
     const tick = () => {
-      const el = document.querySelector(target);
+      // у разделов два варианта (десктоп и гамбургер), берём видимый
+      const el = Array.from(document.querySelectorAll(target)).find(
+        (node) => node.getClientRects().length > 0,
+      );
       if (el) {
         if (!scrolled) {
           scrolled = true;

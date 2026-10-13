@@ -8,11 +8,12 @@ const links = [
   { href: "/analytics", label: "Аналитика" },
 ] as const;
 
-export default function Nav() {
+/** stacked: столбик на всю ширину, для мобильного меню */
+export default function Nav({ stacked = false }: { stacked?: boolean }) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex w-fit gap-2">
+    <nav className={stacked ? "flex flex-col gap-2" : "flex w-fit gap-2"}>
       {links.map((l) => {
         const active =
           l.href === "/"
@@ -23,9 +24,9 @@ export default function Nav() {
             key={l.href}
             href={l.href}
             aria-current={active ? "page" : undefined}
-            className={`px-5 py-2.5 text-sm font-extrabold ${
-              active ? "pill-kid-active" : "pill-kid"
-            }`}
+            className={`px-5 font-extrabold ${
+              stacked ? "py-3 text-base" : "py-2.5 text-sm"
+            } ${active ? "pill-kid-active" : "pill-kid"}`}
           >
             {l.label}
           </Link>

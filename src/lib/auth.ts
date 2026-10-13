@@ -6,6 +6,7 @@ export type PublicUser = {
   id: string;
   name: string;
   email: string;
+  createdAt: number;
 };
 
 export async function getCurrentUser(): Promise<PublicUser | null> {
@@ -15,5 +16,5 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
   if (!session) return null;
   const user = await findUserById(session.sub);
   if (!user) return null;
-  return { id: user.id, name: user.name, email: user.email };
+  return { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt };
 }

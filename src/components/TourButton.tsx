@@ -6,7 +6,7 @@ import { useExerciseStore } from "@/store/useExerciseStore";
 import { useTourStore } from "@/store/useTourStore";
 
 /** Кнопка «Обучение»: зовёт Барсика, и он ведёт по сайту. */
-export default function TourButton() {
+export default function TourButton({ stacked = false }: { stacked?: boolean }) {
   const active = useTourStore((s) => s.active);
   const start = useTourStore((s) => s.start);
 
@@ -19,7 +19,9 @@ export default function TourButton() {
         const { gmfcs, done } = useExerciseStore.getState();
         start(pickPlan(gmfcs, done)[0]?.id ?? "bridge");
       }}
-      className={`flex items-center gap-2 px-5 py-2.5 text-sm font-extrabold ${
+      className={`flex items-center gap-2 px-5 font-extrabold ${
+        stacked ? "py-3 text-base" : "py-2.5 text-sm"
+      } ${
         active ? "pill-kid-active" : "pill-kid"
       }`}
     >
