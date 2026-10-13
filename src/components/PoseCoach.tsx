@@ -6,6 +6,7 @@ import {
   BadgeCheck,
   Bot,
   BotOff,
+  Cat,
   Play,
   Volume2,
   VolumeX,
@@ -22,6 +23,8 @@ import type { CoachPlan } from "@/data/coach";
 import type { Exercise } from "@/data/exercises";
 import { categoryStyles } from "@/data/exercises";
 import { useExerciseStore } from "@/store/useExerciseStore";
+import { SPEECH_PITCH, SPEECH_RATE, pickRussianVoice } from "@/lib/speech";
+import Mascot, { MASCOT_NAME, type MascotMood } from "./Mascot";
 
 type Status = "idle" | "loading" | "live" | "error";
 
@@ -36,18 +39,6 @@ type Metrics = {
   hipTilt: number;
   motion: number;
 };
-
-/** Спокойный темп и чуть более высокий тон: так системный голос звучит мягче. */
-const SPEECH_RATE = 0.9;
-const SPEECH_PITCH = 1.15;
-
-/** Chrome по умолчанию берёт сетевой голос Google, он звучит суховато и
- *  зависит от сети. Предпочитаем локальный системный голос (на macOS Милена). */
-function pickRussianVoice() {
-  const all = window.speechSynthesis?.getVoices() ?? [];
-  const russian = all.filter((v) => v.lang.toLowerCase().startsWith("ru"));
-  return russian.find((v) => v.localService) ?? russian[0] ?? null;
-}
 
 /** Счёт вслух: до двадцати проговариваем словами, дальше числом. */
 const COUNT_WORDS = [
@@ -76,6 +67,9 @@ const COUNT_WORDS = [
 function countWord(value: number) {
   return COUNT_WORDS[value - 1] ?? String(value);
 }
+
+/** Отсчёт перед стартом: ребёнок успевает встать в позу, счёт ещё не идёт. */
+const COUNTDOWN = 3;
 
 /** Минимальный размах метрики, ниже которого считать повторения нельзя. */
 const MIN_HAND_SPAN = 0.18;
@@ -184,6 +178,9 @@ export default function PoseCoach({
   const loopRef = useRef<() => void>(() => {});
   const stopRef = useRef<() => void>(() => {});
   const repsRef = useRef(0);
+  /** До этого момента (performance.now) идёт отсчёт и кадры не считаются */
+  const readyAtRef = useRef(0);
+  const countdownTimersRef = useRef<number[]>([]);
   const roundsRef = useRef(0);
 
   const metricsRef = useRef<Metrics>(EMPTY);
@@ -199,6 +196,8 @@ export default function PoseCoach({
   const voiceOnRef = useRef(true);
   const aiOnRef = useRef(true);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  /** Последняя фраза в очереди: рот закрывается, когда договорена именно она */
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const completedRef = useRef(false);
   const guideRef = useRef({ seconds: 0, last: 0 });
   // Счётчики за занятие: из них собирается разбор на странице результата
@@ -224,6 +223,11 @@ export default function PoseCoach({
   const [completed, setCompleted] = useState(false);
   const [guideSeconds, setGuideSeconds] = useState(0);
   const [handsVisible, setHandsVisible] = useState(false);
+  /** Ребёнок вне кадра или перекос: маскот машет лапой и зовёт */
+  const [needHelp, setNeedHelp] = useState(false);
+  const [talking, setTalking] = useState(false);
+  const [mascotOn, setMascotOn] = useState(true);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const markDone = useExerciseStore((s) => s.markDone);
   const saveResult = useExerciseStore((s) => s.saveResult);
@@ -261,6 +265,13 @@ export default function PoseCoach({
     utterance.rate = SPEECH_RATE;
     utterance.pitch = SPEECH_PITCH;
     if (voiceRef.current) utterance.voice = voiceRef.current;
+    const done = () => {
+      if (utteranceRef.current === utterance) setTalking(false);
+    };
+    utterance.onstart = () => setTalking(true);
+    utterance.onend = done;
+    utterance.onerror = done;
+    utteranceRef.current = utterance;
     synth.speak(utterance);
   }, []);
 
@@ -315,7 +326,13 @@ export default function PoseCoach({
       canvas.width = 0;
       canvas.height = 0;
     }
+    countdownTimersRef.current.forEach((t) => clearTimeout(t));
+    countdownTimersRef.current = [];
+    readyAtRef.current = 0;
+    setCountdown(null);
     window.speechSynthesis?.cancel();
+    utteranceRef.current = null;
+    setTalking(false);
     setStatus("idle");
     metricsRef.current = EMPTY;
     prevLandmarksRef.current = null;
@@ -414,12 +431,19 @@ export default function PoseCoach({
           }
         }
 
+        // во время отсчёта только рисуем скелет, ничего не считаем
+        if (performance.now() < readyAtRef.current) {
+          rafRef.current = requestAnimationFrame(() => loopRef.current());
+          return;
+        }
+
         const st = statsRef.current;
         st.frames += 1;
         const seen = hands.length > 0;
         if (!seen) st.outOfFrame += 1;
         metricsRef.current = { ...metricsRef.current, inFrame: seen };
         setHandsVisible(seen);
+        setNeedHelp(!seen);
 
         let handHint = plan.cue;
         if (!seen) {
@@ -498,6 +522,11 @@ export default function PoseCoach({
           });
           utils.drawLandmarks(lm, { color: style.mark, radius: 5 });
         }
+      }
+
+      if (performance.now() < readyAtRef.current) {
+        rafRef.current = requestAnimationFrame(() => loopRef.current());
+        return;
       }
 
       if (lm && world) {
@@ -634,6 +663,7 @@ export default function PoseCoach({
         }
 
         setHint(localHint);
+        setNeedHelp(urgent);
         speak(localHint, urgent);
       }
     }
@@ -701,6 +731,7 @@ export default function PoseCoach({
       handActivityRef.current = { seconds: 0, last: 0, prev: 0 };
       handPhaseRef.current = "unknown";
       setHandsVisible(false);
+      setNeedHelp(false);
       handRangeRef.current = { min: Infinity, max: -Infinity, since: Date.now() };
       completedRef.current = false;
       repsRef.current = 0;
@@ -722,9 +753,25 @@ export default function PoseCoach({
       setGuideSeconds(0);
       setStatus("live");
 
+      // Барсик отсчитывает «три, два, один», и только потом начинается счёт
+      readyAtRef.current = performance.now() + COUNTDOWN * 1000;
+      setCountdown(COUNTDOWN);
+      setHint("Приготовься и встань в кадр");
+      speak("Приготовься! Три, два, один", true);
+      countdownTimersRef.current = [
+        ...Array.from({ length: COUNTDOWN - 1 }, (_, i) =>
+          window.setTimeout(() => setCountdown(COUNTDOWN - 1 - i), (i + 1) * 1000),
+        ),
+        window.setTimeout(() => {
+          setCountdown(null);
+          setHint(plan.cue);
+          statsRef.current.startedAt = Date.now();
+          speak(`Начали! ${plan.cue}`, true);
+        }, COUNTDOWN * 1000),
+      ];
+
       rafRef.current = requestAnimationFrame(() => loopRef.current());
       aiTimerRef.current = setInterval(() => void askClaude(), 12000);
-      speak(`Начинаем. ${plan.cue}`, true);
     } catch (err) {
       setStatus("error");
       const name = err instanceof DOMException ? err.name : "";
@@ -762,21 +809,26 @@ export default function PoseCoach({
               : "секунд активной работы пальцев"
           : "время занятия";
 
+  const mood: MascotMood = completed ? "party" : needHelp ? "help" : "idle";
+
   return (
     <>
-      <section className="flex flex-col items-center rounded-[28px] bg-white px-6 py-10 text-center sm:py-14">
-        <h2 className="text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
+      <section
+        data-tour="start"
+        className="flex flex-col items-center card-kid px-6 py-10 text-center sm:py-14"
+      >
+        <h2 className="heading-kid text-3xl sm:text-4xl">
           Готовы начать?
         </h2>
-        <p className="mt-3 max-w-md text-sm font-medium leading-relaxed text-neutral-500">
-          {plan.cue}. Камера откроется на весь экран, тренер будет считать и
-          подсказывать голосом.
+        <p className="mt-3 max-w-md text-sm font-medium leading-relaxed text-ink/60">
+          {plan.cue}. Камера откроется на весь экран, а {MASCOT_NAME} будет
+          считать и подсказывать голосом.
         </p>
 
         <button
           type="button"
           onClick={() => void start()}
-          className="mt-7 flex items-center gap-2 rounded-full bg-neutral-900 px-8 py-4 text-sm font-extrabold text-white transition hover:opacity-85"
+          className="mt-7 flex items-center gap-2 btn-kid px-8 py-4 text-base font-extrabold"
         >
           <Play className="size-4" fill="currentColor" aria-hidden />
           Начать упражнение
@@ -824,11 +876,15 @@ export default function PoseCoach({
                 const next = !voiceOn;
                 setVoiceOn(next);
                 voiceOnRef.current = next;
-                if (!next) window.speechSynthesis?.cancel();
+                if (!next) {
+                  window.speechSynthesis?.cancel();
+                  utteranceRef.current = null;
+                  setTalking(false);
+                }
               }}
               aria-pressed={voiceOn}
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-extrabold transition ${
-                voiceOn ? "bg-white text-neutral-900" : "bg-white/20 text-white"
+                voiceOn ? "bg-white text-ink" : "bg-white/20 text-white"
               }`}
             >
               {voiceOn ? (
@@ -847,7 +903,7 @@ export default function PoseCoach({
               }}
               aria-pressed={aiOn}
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-extrabold transition ${
-                aiOn ? "bg-white text-neutral-900" : "bg-white/20 text-white"
+                aiOn ? "bg-white text-ink" : "bg-white/20 text-white"
               }`}
             >
               {aiOn ? (
@@ -856,6 +912,17 @@ export default function PoseCoach({
                 <BotOff className="size-4" aria-hidden />
               )}
               Подсказки ИИ
+            </button>
+            <button
+              type="button"
+              onClick={() => setMascotOn((on) => !on)}
+              aria-pressed={mascotOn}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-extrabold transition ${
+                mascotOn ? "bg-white text-ink" : "bg-white/20 text-white"
+              }`}
+            >
+              <Cat className="size-4" aria-hidden />
+              {MASCOT_NAME}
             </button>
             <button
               type="button"
@@ -872,6 +939,25 @@ export default function PoseCoach({
           <div className="absolute left-1/2 top-24 flex -translate-x-1/2 items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-extrabold text-white shadow-lg">
             <BadgeCheck className="size-5" aria-hidden />
             Упражнение засчитано
+          </div>
+        )}
+
+        {countdown !== null && (
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30">
+            {mascotOn && (
+              <Mascot
+                talking={talking}
+                hop={countdown}
+                className="h-48 w-[9.3rem] drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)] sm:h-72 sm:w-56"
+              />
+            )}
+            <p
+              key={countdown}
+              className="barsik-pop text-8xl font-extrabold text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)] sm:text-9xl"
+              aria-live="assertive"
+            >
+              {countdown}
+            </p>
           </div>
         )}
 
@@ -896,24 +982,46 @@ export default function PoseCoach({
             </p>
           </div>
 
-          <div className="min-w-0 flex-1 sm:max-w-xl">
-            <p className="rounded-[20px] bg-white/90 px-5 py-3 text-sm font-bold text-neutral-900">
-              {hint}
-            </p>
-            {plan.mode === "hand" && (
+          <div className="flex min-w-0 flex-1 items-end gap-2 sm:max-w-2xl">
+            {/* отступ снизу поднимает пузырь к мордочке маскота */}
+            <div className={`min-w-0 flex-1 ${mascotOn ? "pb-8" : ""}`}>
               <p
-                className={`mt-2 rounded-[20px] px-5 py-2 text-xs font-bold ${
-                  handsVisible
-                    ? "bg-emerald-500/80 text-white"
-                    : "bg-amber-500/80 text-white"
+                className={`relative rounded-[20px] px-5 py-3 text-sm font-bold text-ink ${
+                  mascotOn ? "bg-white" : "bg-white/90"
                 }`}
               >
-                {handsVisible
-                  ? "Кисть распознана"
-                  : "Кисть не видна: поднеси руку ближе к камере, на светлый фон"}
+                {hint}
+                {/* хвостик пузыря смотрит на маскота */}
+                {mascotOn && countdown === null && (
+                  <span
+                    className="absolute -right-1.5 bottom-4 size-3.5 rotate-45 rounded-[3px] bg-white"
+                    aria-hidden
+                  />
+                )}
               </p>
-            )}
+              {plan.mode === "hand" && (
+                <p
+                  className={`mt-2 rounded-[20px] px-5 py-2 text-xs font-bold ${
+                    handsVisible
+                      ? "bg-emerald-500/80 text-white"
+                      : "bg-amber-500/80 text-white"
+                  }`}
+                >
+                  {handsVisible
+                    ? "Кисть распознана"
+                    : "Кисть не видна: поднеси руку ближе к камере, на светлый фон"}
+                </p>
+              )}
+            </div>
 
+            {mascotOn && countdown === null && (
+              <Mascot
+                mood={mood}
+                talking={talking}
+                hop={reps + rounds}
+                className="h-32 w-[6.2rem] shrink-0 drop-shadow-[0_6px_16px_rgba(0,0,0,0.35)] sm:h-48 sm:w-[9.3rem]"
+              />
+            )}
           </div>
         </div>
       </div>

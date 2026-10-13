@@ -1,3 +1,12 @@
+import {
+  Balloon,
+  Footprints,
+  Hand,
+  Sprout,
+  Wind,
+  type LucideIcon,
+} from "lucide-react";
+
 export type Category =
   | "Крупная моторика"
   | "Мелкая моторика"
@@ -34,17 +43,19 @@ export type CategoryStyle = {
   bg: string;
   ink: string;
   mark: string;
+  /** Иконка категории на карточках и странице упражнения */
+  icon: LucideIcon;
 };
 
 /** bg/ink задают пастельную карточку, mark это насыщенный цвет для точек,
  *  и акцентов. Набор mark прошёл проверку scripts/validate_palette.js
  *  (контраст, разделимость при CVD) на светлой подложке. */
 export const categoryStyles: Record<Category, CategoryStyle> = {
-  "Крупная моторика": { bg: "#AEDCF5", ink: "#0B3B52", mark: "#2585AE" },
-  "Мелкая моторика": { bg: "#B9BEF7", ink: "#1B2159", mark: "#7B3FD1" },
-  Растяжка: { bg: "#9BE7C4", ink: "#0E4530", mark: "#1E9C6B" },
-  "Баланс и координация": { bg: "#F7D68C", ink: "#4D3405", mark: "#A87406" },
-  "Дыхание и речь": { bg: "#F5AECB", ink: "#57122F", mark: "#CF3A80" },
+  "Крупная моторика": { bg: "#AEDCF5", ink: "#0B3B52", mark: "#2585AE", icon: Footprints },
+  "Мелкая моторика": { bg: "#B9BEF7", ink: "#1B2159", mark: "#7B3FD1", icon: Hand },
+  Растяжка: { bg: "#9BE7C4", ink: "#0E4530", mark: "#1E9C6B", icon: Sprout },
+  "Баланс и координация": { bg: "#F7D68C", ink: "#4D3405", mark: "#A87406", icon: Balloon },
+  "Дыхание и речь": { bg: "#F5AECB", ink: "#57122F", mark: "#CF3A80", icon: Wind },
 };
 
 export const exercises: Exercise[] = [

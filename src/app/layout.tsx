@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
+import { Balsamiq_Sans, Nunito } from "next/font/google";
 import "./globals.css";
 
 const nunito = Nunito({
   variable: "--font-nunito",
+  subsets: ["latin", "cyrillic"],
+});
+
+/** Детский шрифт только для заголовков: основной текст остаётся на Nunito */
+const balsamiq = Balsamiq_Sans({
+  variable: "--font-balsamiq",
+  weight: ["400", "700"],
   subsets: ["latin", "cyrillic"],
 });
 
@@ -15,7 +22,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ru" className={`${nunito.variable} h-full antialiased`}>
+    <html
+      lang="ru"
+      className={`${nunito.variable} ${balsamiq.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

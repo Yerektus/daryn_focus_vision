@@ -125,9 +125,9 @@ function analyze(result: SessionResult, plan: CoachPlan) {
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[24px] bg-white p-5">
-      <p className="text-sm font-bold text-neutral-400">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold leading-none text-neutral-900 sm:text-3xl">
+    <div className="card-kid p-5">
+      <p className="text-sm font-bold text-ink/45">{label}</p>
+      <p className="mt-2 text-2xl font-extrabold leading-none text-ink sm:text-3xl">
         {value}
       </p>
     </div>
@@ -201,15 +201,15 @@ export default function ResultBoard({
   if (!result) {
     return (
       <div className="px-1 py-2 sm:px-2 sm:py-4">
-        <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">
+        <h1 className="heading-kid text-3xl">
           Результатов пока нет
         </h1>
-        <p className="mt-3 max-w-lg text-sm font-medium text-neutral-500">
+        <p className="mt-3 max-w-lg text-sm font-medium text-ink/60">
           Пройдите упражнение с камерой, и здесь появится разбор занятия.
         </p>
         <Link
           href={`/exercise/${exercise.id}`}
-          className="mt-6 flex w-fit items-center gap-2 rounded-full bg-neutral-900 px-6 py-3 text-sm font-extrabold text-white"
+          className="mt-6 flex w-fit items-center gap-2 btn-kid px-6 py-3 text-sm font-extrabold"
         >
           К упражнению
         </Link>
@@ -237,10 +237,10 @@ export default function ResultBoard({
         Упражнение засчитано
       </span>
 
-      <h1 className="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-neutral-900 sm:text-5xl">
+      <h1 className="mt-4 heading-kid text-4xl leading-[1.05] sm:text-5xl">
         {exercise.title}
       </h1>
-      <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-neutral-700">
+      <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-ink/80">
         <span
           className="rounded-full px-3 py-1.5"
           style={{ backgroundColor: style.bg, color: style.ink }}
@@ -267,13 +267,13 @@ export default function ResultBoard({
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <section className="rounded-[28px] bg-white p-5 sm:p-6">
-          <h2 className="flex items-center gap-2 text-lg font-extrabold text-neutral-900">
+        <section className="card-kid p-5 sm:p-6">
+          <h2 className="heading-kid flex items-center gap-2 text-xl">
             <ThumbsUp className="size-5 text-emerald-600" aria-hidden />
             Что получилось
           </h2>
           {wins.length === 0 ? (
-            <p className="mt-4 text-sm font-medium text-neutral-500">
+            <p className="mt-4 text-sm font-medium text-ink/60">
               В этот раз камера не набрала достаточно данных для похвалы.
               Попробуйте занятие подлиннее.
             </p>
@@ -291,18 +291,18 @@ export default function ResultBoard({
           )}
         </section>
 
-        <section className="rounded-[28px] bg-white p-5 sm:p-6">
-          <h2 className="flex items-center gap-2 text-lg font-extrabold text-neutral-900">
+        <section className="card-kid p-5 sm:p-6">
+          <h2 className="heading-kid flex items-center gap-2 text-xl">
             <TriangleAlert className="size-5 text-amber-500" aria-hidden />
             Над чем поработать
           </h2>
           <ul className="mt-4 space-y-3">
             {issues.map((issue) => (
-              <li key={issue.title} className="rounded-2xl bg-[#F7F5F2] p-4">
-                <p className="text-sm font-extrabold text-neutral-900">
+              <li key={issue.title} className="rounded-2xl bg-[#FFF8EC] p-4">
+                <p className="text-sm font-extrabold text-ink">
                   {issue.title}
                 </p>
-                <p className="mt-1 text-sm font-medium leading-relaxed text-neutral-600">
+                <p className="mt-1 text-sm font-medium leading-relaxed text-ink/70">
                   {issue.advice}
                 </p>
               </li>
@@ -311,13 +311,13 @@ export default function ResultBoard({
         </section>
       </div>
 
-      <section className="mt-4 rounded-[28px] bg-white p-5 sm:p-6">
-        <h2 className="flex items-center gap-2 text-lg font-extrabold text-neutral-900">
-          <Lightbulb className="size-5 text-neutral-400" aria-hidden />
+      <section className="mt-4 card-kid p-5 sm:p-6">
+        <h2 className="heading-kid flex items-center gap-2 text-xl">
+          <Lightbulb className="size-5 text-ink/45" aria-hidden />
           Разбор от ИИ
         </h2>
         {reportLoading && report.length === 0 && !reportNote && (
-          <p className="mt-3 text-sm font-medium text-neutral-400">
+          <p className="mt-3 text-sm font-medium text-ink/45">
             Готовлю разбор занятия…
           </p>
         )}
@@ -326,7 +326,7 @@ export default function ResultBoard({
             {report.map((line) => (
               <li
                 key={line}
-                className="rounded-2xl bg-[#F7F5F2] px-4 py-3 text-sm font-medium leading-relaxed text-neutral-700"
+                className="rounded-2xl bg-[#FFF8EC] px-4 py-3 text-sm font-medium leading-relaxed text-ink/80"
               >
                 {line}
               </li>
@@ -343,7 +343,7 @@ export default function ResultBoard({
       <div className="mt-6">
         <Link
           href={`/exercise/${exercise.id}`}
-          className="flex w-fit items-center gap-2 rounded-full bg-neutral-900 px-6 py-3 text-sm font-extrabold text-white transition hover:opacity-85"
+          className="flex w-fit items-center gap-2 btn-kid px-6 py-3 text-sm font-extrabold"
         >
           <RotateCcw className="size-4" aria-hidden />
           Повторить упражнение

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Category, Level } from "@/data/exercises";
+import type { GmfcsLevel } from "@/data/gmfcs";
 
 type Filter<T> = T | "Все";
 
@@ -32,6 +33,11 @@ type ExerciseState = {
   category: Filter<Category>;
   level: Filter<Level>;
   query: string;
+  /** Показывать только упражнения, подходящие уровню GMFCS ребёнка */
+  fitOnly: boolean;
+  /** Ориентировочный уровень GMFCS: от врача или по опроснику Барсика */
+  gmfcs: GmfcsLevel | null;
+  gmfcsSource: "doctor" | "quiz" | null;
   done: DoneMap;
   /** Последний разбор по каждому упражнению */
   results: Record<string, SessionResult>;
@@ -39,6 +45,8 @@ type ExerciseState = {
   setCategory: (category: Filter<Category>) => void;
   setLevel: (level: Filter<Level>) => void;
   setQuery: (query: string) => void;
+  setFitOnly: (fitOnly: boolean) => void;
+  setGmfcs: (level: GmfcsLevel | null, source: "doctor" | "quiz" | null) => void;
   /** Отметка ставится автоматически после прохождения упражнения на камере */
   markDone: (id: string) => void;
   saveResult: (result: SessionResult) => void;
@@ -52,19 +60,26 @@ export const useExerciseStore = create<ExerciseState>()(
       category: "Все",
       level: "Все",
       query: "",
+      fitOnly: false,
+      gmfcs: null,
+      gmfcsSource: null,
       done: {},
       results: {},
 
       setCategory: (category) => set({ category }),
       setLevel: (level) => set({ level }),
       setQuery: (query) => set({ query }),
+      setFitOnly: (fitOnly) => set({ fitOnly }),
+      setGmfcs: (gmfcs, gmfcsSource) =>
+        set({ gmfcs, gmfcsSource, fitOnly: gmfcs !== null }),
       markDone: (id) =>
         set((s) => (id in s.done ? s : { done: { ...s.done, [id]: Date.now() } })),
       saveResult: (result) =>
         set((s) => ({
           results: { ...s.results, [result.exerciseId]: result },
         })),
-      resetFilters: () => set({ category: "Все", level: "Все", query: "" }),
+      resetFilters: () =>
+        set({ category: "Все", level: "Все", query: "", fitOnly: false }),
       resetProgress: () => set({ done: {}, results: {} }),
     }),
     {
@@ -72,7 +87,12 @@ export const useExerciseStore = create<ExerciseState>()(
       skipHydration: true,
       version: 2,
       // фильтры не сохраняем, они относятся только к текущему сеансу
-      partialize: (s) => ({ done: s.done, results: s.results }),
+      partialize: (s) => ({
+        done: s.done,
+        results: s.results,
+        gmfcs: s.gmfcs,
+        gmfcsSource: s.gmfcsSource,
+      }),
       migrate: (persisted, version) => {
         const state = persisted as { done?: unknown };
         // v1 хранил done как массив id, без дат
@@ -110,11 +130,17 @@ export async function bindExerciseStore(userId: string) {
   }
 
   useExerciseStore.persist.setOptions({ name });
+  // уровень GMFCS прошлого аккаунта не должен достаться новому: у старых
+  // сохранений этого поля нет, и rehydrate оставил бы текущее значение
+  useExerciseStore.setState({ gmfcs: null, gmfcsSource: null, fitOnly: false });
   if (typeof window !== "undefined" && !localStorage.getItem(name)) {
     useExerciseStore.setState({
       category: "Все",
       level: "Все",
       query: "",
+      fitOnly: false,
+      gmfcs: null,
+      gmfcsSource: null,
       done: {},
       results: {},
     });

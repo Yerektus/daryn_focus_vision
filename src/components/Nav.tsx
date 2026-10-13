@@ -23,10 +23,8 @@ export default function Nav() {
             key={l.href}
             href={l.href}
             aria-current={active ? "page" : undefined}
-            className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${
-              active
-                ? "bg-neutral-900 text-white"
-                : "bg-[#F1EEEA] text-neutral-500 hover:bg-[#E9E5E0] hover:text-neutral-900"
+            className={`px-5 py-2.5 text-sm font-extrabold ${
+              active ? "pill-kid-active" : "pill-kid"
             }`}
           >
             {l.label}

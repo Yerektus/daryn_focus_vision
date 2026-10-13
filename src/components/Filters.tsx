@@ -1,7 +1,8 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Check, Search } from "lucide-react";
 import { categories, type Category, type Level } from "@/data/exercises";
+import { gmfcsRoman } from "@/data/gmfcs";
 import { useExerciseStore } from "@/store/useExerciseStore";
 import Select from "./Select";
 
@@ -18,14 +19,23 @@ const levelOptions = [
 ];
 
 export default function Filters() {
-  const { category, level, query, setCategory, setLevel, setQuery } =
-    useExerciseStore();
+  const {
+    category,
+    level,
+    query,
+    fitOnly,
+    gmfcs,
+    setCategory,
+    setLevel,
+    setQuery,
+    setFitOnly,
+  } = useExerciseStore();
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" data-tour="filters">
       <div className="relative">
         <Search
-          className="pointer-events-none absolute left-5 top-1/2 size-[18px] -translate-y-1/2 text-neutral-400"
+          className="pointer-events-none absolute left-5 top-1/2 size-[18px] -translate-y-1/2 text-grape"
           strokeWidth={2.5}
           aria-hidden
         />
@@ -35,7 +45,7 @@ export default function Filters() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Найти упражнение"
           aria-label="Поиск упражнений"
-          className="w-full rounded-full bg-white py-4 pl-13 pr-5 text-sm font-semibold text-neutral-800 outline-none placeholder:font-medium placeholder:text-neutral-400 focus:ring-2 focus:ring-neutral-900/10"
+          className="w-full rounded-full border-2 border-line bg-white py-4 pl-13 pr-5 text-sm font-semibold text-ink outline-none transition placeholder:font-medium placeholder:text-ink/40 focus:border-grape"
         />
       </div>
 
@@ -53,6 +63,20 @@ export default function Filters() {
           label="Уровень сложности"
         />
       </div>
+
+      {gmfcs !== null && (
+        <button
+          type="button"
+          aria-pressed={fitOnly}
+          onClick={() => setFitOnly(!fitOnly)}
+          className={`flex w-fit items-center gap-2 px-5 py-3 text-sm font-extrabold ${
+            fitOnly ? "pill-kid-active" : "pill-kid"
+          }`}
+        >
+          {fitOnly && <Check className="size-4" strokeWidth={3} aria-hidden />}
+          Подходят ребёнку · GMFCS {gmfcsRoman[gmfcs]}
+        </button>
+      )}
     </div>
   );
 }

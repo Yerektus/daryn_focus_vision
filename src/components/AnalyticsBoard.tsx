@@ -53,12 +53,12 @@ function Tile({
   hint: string;
 }) {
   return (
-    <div className="rounded-[28px] bg-white p-5 sm:p-6">
-      <p className="text-sm font-bold text-neutral-400">{label}</p>
-      <p className="mt-2 text-3xl font-extrabold leading-none text-neutral-900 sm:text-4xl">
+    <div className="card-kid p-5 sm:p-6">
+      <p className="text-sm font-bold text-ink/45">{label}</p>
+      <p className="mt-2 text-3xl font-extrabold leading-none text-ink sm:text-4xl">
         {value}
       </p>
-      <p className="mt-2 text-sm text-neutral-500">{hint}</p>
+      <p className="mt-2 text-sm text-ink/60">{hint}</p>
     </div>
   );
 }
@@ -132,16 +132,19 @@ export default function AnalyticsBoard() {
   return (
     <div className="px-1 py-2 sm:px-2 sm:py-4">
       <header>
-        <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-neutral-900 sm:text-5xl">
+        <h1 className="heading-kid text-4xl leading-[1.05] sm:text-5xl">
           Аналитика занятий
         </h1>
-        <p className="mt-4 max-w-xl text-sm font-medium leading-relaxed text-neutral-500 sm:text-base">
+        <p className="mt-4 max-w-xl text-sm font-medium leading-relaxed text-ink/60 sm:text-base">
           Сводка по упражнениям, пройденным с камерой. Данные хранятся только в
           этом браузере и не отправляются на сервер.
         </p>
       </header>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div
+        data-tour="stats"
+        className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      >
         <Tile
           label="Выполнено"
           value={`${stats.doneCount} из ${stats.total}`}
@@ -165,11 +168,11 @@ export default function AnalyticsBoard() {
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <section className="rounded-[28px] bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-extrabold text-neutral-900">
+        <section className="card-kid p-5 sm:p-6">
+          <h2 className="heading-kid text-xl">
             Прогресс по направлениям
           </h2>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-ink/60">
             Выполнено упражнений из доступных в направлении
           </p>
 
@@ -179,18 +182,18 @@ export default function AnalyticsBoard() {
               return (
                 <li key={row.category}>
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm font-bold text-neutral-700">
+                    <span className="text-sm font-bold text-ink/80">
                       {row.category}
                     </span>
-                    <span className="text-sm font-extrabold text-neutral-900">
+                    <span className="text-sm font-extrabold text-ink">
                       {row.done}
-                      <span className="font-semibold text-neutral-400">
+                      <span className="font-semibold text-ink/45">
                         {" "}
                         / {row.total}
                       </span>
                     </span>
                   </div>
-                  <div className="mt-2 h-3 w-full rounded-full bg-[#F1EEEA]">
+                  <div className="mt-2 h-3 w-full rounded-full bg-chip">
                     <div
                       className="h-3 rounded-full transition-[width] duration-500"
                       style={{
@@ -205,16 +208,16 @@ export default function AnalyticsBoard() {
           </ul>
         </section>
 
-        <section className="rounded-[28px] bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-extrabold text-neutral-900">
+        <section className="card-kid p-5 sm:p-6">
+          <h2 className="heading-kid text-xl">
             Активность за 14 дней
           </h2>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-ink/60">
             Сколько упражнений отмечено в каждый день
           </p>
 
           {!hydrated ? (
-            <div className="mt-6 h-52 rounded-2xl bg-[#F1EEEA]" />
+            <div className="mt-6 h-52 rounded-2xl bg-chip" />
           ) : (
             <div className="mt-6 h-52">
               <ResponsiveContainer width="100%" height="100%">
@@ -222,30 +225,30 @@ export default function AnalyticsBoard() {
                   data={stats.timeline}
                   margin={{ top: 8, right: 12, bottom: 0, left: 0 }}
                 >
-                  <CartesianGrid stroke="#EFECE8" vertical={false} />
+                  <CartesianGrid stroke="#F3E3C6" vertical={false} />
                   <XAxis
                     dataKey="day"
                     tickFormatter={(day) => dayLabel.format(Number(day))}
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fill: "#A3A3A3", fontSize: 11, fontWeight: 600 }}
+                    tick={{ fill: "#8A82A8", fontSize: 11, fontWeight: 600 }}
                   />
                   <YAxis
                     allowDecimals={false}
                     width={28}
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fill: "#A3A3A3", fontSize: 11, fontWeight: 600 }}
+                    tick={{ fill: "#8A82A8", fontSize: 11, fontWeight: 600 }}
                   />
                   <Tooltip
-                    cursor={{ stroke: "#D8D3CC", strokeWidth: 1 }}
+                    cursor={{ stroke: "#E3D3B5", strokeWidth: 1 }}
                     separator=": "
                     labelFormatter={(day) => fullDate.format(Number(day))}
                     formatter={(value) => [`${Number(value)} упр.`, "Отмечено"]}
                     contentStyle={{
                       borderRadius: 16,
                       border: "none",
-                      boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+                      boxShadow: "0 10px 30px rgba(43,35,80,0.14)",
                       fontSize: 13,
                       fontWeight: 600,
                     }}
@@ -254,9 +257,9 @@ export default function AnalyticsBoard() {
                     type="linear"
                     dataKey="count"
                     stroke="#2585AE"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: "#2585AE", strokeWidth: 0 }}
-                    activeDot={{ r: 5 }}
+                    strokeWidth={3}
+                    dot={{ r: 5, fill: "#2585AE", stroke: "#fff", strokeWidth: 2 }}
+                    activeDot={{ r: 7 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -266,26 +269,26 @@ export default function AnalyticsBoard() {
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <section className="rounded-[28px] bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-extrabold text-neutral-900">
+        <section className="card-kid p-5 sm:p-6">
+          <h2 className="heading-kid text-xl">
             По уровню сложности
           </h2>
           <ul className="mt-6 space-y-5">
             {stats.byLevel.map((row) => (
               <li key={row.level}>
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm font-bold text-neutral-700">
+                  <span className="text-sm font-bold text-ink/80">
                     {row.level}
                   </span>
-                  <span className="text-sm font-extrabold text-neutral-900">
+                  <span className="text-sm font-extrabold text-ink">
                     {row.done}
-                    <span className="font-semibold text-neutral-400">
+                    <span className="font-semibold text-ink/45">
                       {" "}
                       / {row.total}
                     </span>
                   </span>
                 </div>
-                <div className="mt-2 h-3 w-full rounded-full bg-[#F1EEEA]">
+                <div className="mt-2 h-3 w-full rounded-full bg-chip">
                   <div
                     className="h-3 rounded-full transition-[width] duration-500"
                     style={{
@@ -299,17 +302,17 @@ export default function AnalyticsBoard() {
           </ul>
         </section>
 
-        <section className="rounded-[28px] bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-extrabold text-neutral-900">
+        <section className="card-kid p-5 sm:p-6">
+          <h2 className="heading-kid text-xl">
             Последние отметки
           </h2>
           {stats.recent.length === 0 ? (
-            <p className="mt-6 rounded-2xl bg-[#F1EEEA] p-6 text-sm text-neutral-500">
+            <p className="mt-6 rounded-2xl bg-chip p-6 text-sm text-ink/60">
               Пока ничего не пройдено. Откройте упражнение, потренируйтесь с
               камерой, и здесь появится статистика.
             </p>
           ) : (
-            <ul className="mt-4 divide-y divide-neutral-100">
+            <ul className="mt-4 divide-y divide-line">
               {stats.recent.map(({ exercise, at }) => {
                 const s = categoryStyles[exercise.category];
                 // разбор есть не у всех отметок: старые ведут на само упражнение
@@ -320,25 +323,25 @@ export default function AnalyticsBoard() {
                   <li key={exercise.id}>
                     <Link
                       href={href}
-                      className="-mx-2 flex items-center gap-3 rounded-2xl px-2 py-3 transition hover:bg-[#F7F5F2]"
+                      className="-mx-2 flex items-center gap-3 rounded-2xl px-2 py-3 transition hover:bg-chip"
                     >
                       <span
                         className="size-2.5 shrink-0 rounded-full"
                         style={{ backgroundColor: s.mark }}
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-neutral-800">
+                        <span className="block truncate text-sm font-bold text-ink">
                           {exercise.title}
                         </span>
-                        <span className="block text-xs text-neutral-400">
+                        <span className="block text-xs text-ink/45">
                           {exercise.category}
                         </span>
                       </span>
-                      <span className="shrink-0 text-xs font-semibold text-neutral-500">
+                      <span className="shrink-0 text-xs font-semibold text-ink/60">
                         {hydrated ? fullDate.format(at) : ""}
                       </span>
                       <ChevronRight
-                        className="size-4 shrink-0 text-neutral-300"
+                        className="size-4 shrink-0 text-ink/30"
                         aria-hidden
                       />
                     </Link>

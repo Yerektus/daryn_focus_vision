@@ -49,11 +49,13 @@ export default function Select({ value, options, onChange, label }: Props) {
         aria-expanded={open}
         aria-label={label}
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-3 rounded-full bg-white py-4 pl-5 pr-4 text-left text-sm font-semibold text-neutral-800 transition hover:bg-neutral-50"
+        className={`flex w-full items-center justify-between gap-3 rounded-full border-2 bg-white py-4 pl-5 pr-4 text-left text-sm font-bold text-ink transition hover:bg-[#FFFCF5] ${
+          open ? "border-grape" : "border-line"
+        }`}
       >
         <span className="truncate">{current.label}</span>
         <ChevronDown
-          className={`size-3.5 shrink-0 text-neutral-500 transition-transform ${
+          className={`size-3.5 shrink-0 text-grape transition-transform ${
             open ? "rotate-180" : ""
           }`}
           strokeWidth={3}
@@ -65,7 +67,7 @@ export default function Select({ value, options, onChange, label }: Props) {
         <ul
           role="listbox"
           aria-label={label}
-          className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-[26px] bg-white p-2 shadow-[0_18px_44px_rgba(0,0,0,0.16)]"
+          className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-[26px] border-2 border-line bg-white p-2 shadow-[0_18px_44px_rgba(43,35,80,0.16)]"
         >
           {options.map((o) => {
             const selected = o.value === value;
@@ -84,8 +86,8 @@ export default function Select({ value, options, onChange, label }: Props) {
                 }}
                 className={`flex cursor-pointer items-center justify-between gap-3 rounded-full px-4 py-2.5 text-sm outline-none transition ${
                   selected
-                    ? "bg-neutral-900 font-bold text-white"
-                    : "font-semibold text-neutral-600 hover:bg-neutral-100 focus:bg-neutral-100"
+                    ? "bg-grape font-bold text-white"
+                    : "font-semibold text-ink/75 hover:bg-chip focus:bg-chip"
                 }`}
               >
                 {o.label}

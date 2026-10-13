@@ -2,19 +2,243 @@
 
 :root {
   color-scheme: light;
-  --background: #f7f5f2;
-  --foreground: #171717;
+  --background: #fff8ec;
+  --foreground: #2b2350;
+  --ink: #2b2350;
+  --sun: #ffc83d;
+  --sun-deep: #e3a514;
+  --grape: #7b3fd1;
+  --grape-deep: #5b2aa3;
+  --chip: #ffefd2;
+  --chip-hover: #ffe4b5;
+  --line: #f3e3c6;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-sun: var(--sun);
+  --color-sun-deep: var(--sun-deep);
+  --color-grape: var(--grape);
+  --color-chip: var(--chip);
+  --color-chip-hover: var(--chip-hover);
+  --color-line: var(--line);
   --font-sans: var(--font-nunito);
+  --font-kid: var(--font-balsamiq);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  /* еле заметный горошек: тёплый фон без пестроты */
+  background-image:
+    radial-gradient(circle, rgb(255 200 61 / 0.18) 2px, transparent 2.5px),
+    radial-gradient(circle, rgb(123 63 209 / 0.08) 2px, transparent 2.5px);
+  background-size: 48px 48px;
+  background-position:
+    0 0,
+    24px 24px;
   color: var(--foreground);
   font-family: var(--font-nunito), system-ui, -apple-system, "Segoe UI", Roboto,
     sans-serif;
+}
+
+@layer components {
+  /* Заголовки «детским» шрифтом */
+  .heading-kid {
+    font-family: var(--font-balsamiq), var(--font-nunito), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  /* «Пухлая» кнопка: жёлтая, с цветной тенью снизу, мягко нажимается */
+  .btn-kid {
+    border-radius: 9999px;
+    background-color: var(--sun);
+    color: var(--ink);
+    box-shadow: 0 4px 0 var(--sun-deep);
+    transition:
+      transform 0.15s ease-out,
+      box-shadow 0.15s ease-out,
+      filter 0.15s ease-out;
+  }
+  .btn-kid:hover {
+    filter: brightness(1.04);
+  }
+  .btn-kid:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 var(--sun-deep);
+  }
+  .btn-kid:focus-visible {
+    outline: 3px solid var(--grape);
+    outline-offset: 3px;
+  }
+
+  /* Таблетки навигации и переключателей */
+  .pill-kid {
+    border-radius: 9999px;
+    background-color: var(--chip);
+    color: rgb(43 35 80 / 0.7);
+    transition:
+      background-color 0.2s ease-out,
+      color 0.2s ease-out,
+      transform 0.15s ease-out;
+  }
+  .pill-kid:hover {
+    background-color: var(--chip-hover);
+    color: var(--ink);
+  }
+  .pill-kid-active {
+    border-radius: 9999px;
+    background-color: var(--grape);
+    color: #fff;
+    box-shadow: 0 3px 0 var(--grape-deep);
+  }
+
+  /* Белая карточка с мягкой тёплой обводкой */
+  .card-kid {
+    border-radius: 32px;
+    background-color: #fff;
+    border: 2px solid var(--line);
+    box-shadow: 0 6px 0 var(--line);
+  }
+}
+
+/* Декор (звёздочки, облачка): медленно парит. */
+.kid-float {
+  animation: kid-float 6s ease-in-out infinite;
+}
+
+@keyframes kid-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-8px) rotate(6deg);
+  }
+}
+
+/* Маскот Барсик (components/Mascot.tsx, components/Tour.tsx). Движения
+   медленные и мягкие: резкая анимация отвлекает и может пугать. */
+.barsik-mood-idle,
+.barsik-mood-help,
+.barsik-mood-party,
+.barsik-hop,
+.barsik-talk,
+.barsik-pop {
+  transform-origin: 50% 100%;
+}
+
+/* ждёт: еле заметно «дышит» */
+.barsik-mood-idle {
+  animation: barsik-breathe 3.2s ease-in-out infinite;
+}
+
+/* зовёт в кадр: покачивается из стороны в сторону, как будто машет */
+.barsik-mood-help {
+  animation: barsik-sway 1.4s ease-in-out infinite;
+}
+
+/* повторение засчитано: один прыжок; в конце упражнения прыгает без остановки */
+.barsik-hop {
+  animation: barsik-hop 0.7s ease-out;
+}
+[data-mood="party"] > .barsik-hop {
+  animation: barsik-hop 0.9s ease-out infinite;
+}
+
+/* говорит: чуть пружинит в такт речи */
+.barsik-talk {
+  animation: barsik-talk 0.28s ease-in-out infinite alternate;
+}
+
+.barsik-confetti {
+  animation: barsik-confetti 1.8s ease-in-out infinite;
+}
+
+/* новая реплика в обучении: мягко подпрыгивает */
+.barsik-pop {
+  animation: barsik-pop 0.6s ease-out;
+}
+
+@keyframes barsik-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.01, 1.025);
+  }
+}
+
+@keyframes barsik-sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes barsik-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  15% {
+    transform: translateY(0) scale(1.04, 0.95);
+  }
+  45% {
+    transform: translateY(-14%) scale(0.97, 1.04);
+  }
+  80% {
+    transform: translateY(0) scale(1.03, 0.97);
+  }
+}
+
+@keyframes barsik-talk {
+  from {
+    transform: translateY(0) scale(1, 1);
+  }
+  to {
+    transform: translateY(-1.5%) scale(1.01, 1.02);
+  }
+}
+
+@keyframes barsik-confetti {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(10px) rotate(90deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes barsik-pop {
+  0% {
+    transform: translateY(6px) scale(0.97);
+  }
+  45% {
+    transform: translateY(-8px) scale(1.01);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="barsik-"],
+  .kid-float {
+    animation: none !important;
+  }
+  .btn-kid,
+  .pill-kid {
+    transition: none;
+  }
 }

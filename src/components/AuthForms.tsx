@@ -5,7 +5,7 @@ import { useActionState, useState } from "react";
 import { login, register, type AuthState } from "@/app/auth-actions";
 
 const inputClass =
-  "mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base font-semibold text-neutral-900 outline-none transition placeholder:text-neutral-300 focus:border-neutral-900";
+  "mt-2 w-full rounded-2xl border-2 border-line bg-[#FFFCF5] px-4 py-3 text-base font-semibold text-ink outline-none transition placeholder:text-ink/30 focus:border-grape focus:bg-white";
 
 function nextQuery(next: string) {
   return next !== "/" ? `?next=${encodeURIComponent(next)}` : "";
@@ -14,7 +14,7 @@ function nextQuery(next: string) {
 function ErrorNote({ error }: { error?: string }) {
   if (!error) return null;
   return (
-    <p role="alert" className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+    <p role="alert" className="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
       {error}
     </p>
   );
@@ -29,7 +29,7 @@ export function LoginForm({ next }: { next: string }) {
     <form action={action} className="mt-8 flex flex-col gap-4">
       <input type="hidden" name="next" value={next} />
       <ErrorNote error={state?.error} />
-      <label className="text-sm font-bold text-neutral-700">
+      <label className="text-sm font-extrabold text-ink/80">
         Почта
         <input
           className={inputClass}
@@ -43,7 +43,7 @@ export function LoginForm({ next }: { next: string }) {
           onChange={(event) => setEmail(event.target.value)}
         />
       </label>
-      <label className="text-sm font-bold text-neutral-700">
+      <label className="text-sm font-extrabold text-ink/80">
         Пароль
         <input
           className={inputClass}
@@ -59,13 +59,13 @@ export function LoginForm({ next }: { next: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded-full bg-neutral-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-neutral-700 disabled:opacity-60"
+        className="btn-kid mt-2 px-5 py-3.5 text-base font-extrabold disabled:opacity-60"
       >
         {pending ? "Входим…" : "Войти"}
       </button>
-      <p className="text-sm font-bold text-neutral-500">
+      <p className="text-sm font-bold text-ink/60">
         Нет аккаунта?{" "}
-        <Link href={`/register${nextQuery(next)}`} className="text-neutral-900 underline">
+        <Link href={`/register${nextQuery(next)}`} className="font-extrabold text-grape underline underline-offset-2">
           Зарегистрироваться
         </Link>
       </p>
@@ -83,7 +83,7 @@ export function RegisterForm({ next }: { next: string }) {
     <form action={action} className="mt-8 flex flex-col gap-4">
       <input type="hidden" name="next" value={next} />
       <ErrorNote error={state?.error} />
-      <label className="text-sm font-bold text-neutral-700">
+      <label className="text-sm font-extrabold text-ink/80">
         Имя
         <input
           className={inputClass}
@@ -98,7 +98,7 @@ export function RegisterForm({ next }: { next: string }) {
           onChange={(event) => setName(event.target.value)}
         />
       </label>
-      <label className="text-sm font-bold text-neutral-700">
+      <label className="text-sm font-extrabold text-ink/80">
         Почта
         <input
           className={inputClass}
@@ -112,7 +112,7 @@ export function RegisterForm({ next }: { next: string }) {
           onChange={(event) => setEmail(event.target.value)}
         />
       </label>
-      <label className="text-sm font-bold text-neutral-700">
+      <label className="text-sm font-extrabold text-ink/80">
         Пароль
         <input
           className={inputClass}
@@ -129,13 +129,13 @@ export function RegisterForm({ next }: { next: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded-full bg-neutral-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-neutral-700 disabled:opacity-60"
+        className="btn-kid mt-2 px-5 py-3.5 text-base font-extrabold disabled:opacity-60"
       >
         {pending ? "Создаём…" : "Создать аккаунт"}
       </button>
-      <p className="text-sm font-bold text-neutral-500">
+      <p className="text-sm font-bold text-ink/60">
         Уже есть аккаунт?{" "}
-        <Link href={`/login${nextQuery(next)}`} className="text-neutral-900 underline">
+        <Link href={`/login${nextQuery(next)}`} className="font-extrabold text-grape underline underline-offset-2">
           Войти
         </Link>
       </p>

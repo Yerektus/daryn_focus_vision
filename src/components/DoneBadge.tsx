@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Star } from "lucide-react";
 import { useExerciseStore } from "@/store/useExerciseStore";
 import { useHydrated } from "./useHydrated";
 
@@ -12,8 +12,8 @@ export default function DoneBadge({ id }: { id: string }) {
   if (!done) return null;
 
   return (
-    <span className="flex items-center gap-2 rounded-full bg-neutral-900 px-5 py-3 text-sm font-extrabold text-white">
-      <Check className="size-4" strokeWidth={3.5} aria-hidden />
+    <span className="flex rotate-3 items-center gap-2 rounded-full bg-sun px-5 py-3 text-sm font-extrabold text-ink shadow-[0_4px_0_var(--sun-deep)]">
+      <Star className="size-5" fill="currentColor" strokeWidth={0} aria-hidden />
       Пройдено
     </span>
   );
